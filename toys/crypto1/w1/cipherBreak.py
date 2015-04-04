@@ -1,3 +1,6 @@
+import cryptoutils
+
+""" messages encrypted with the same "one" time pad. Need to decrypt these """
 messages = [x.decode('hex') for x in ["315c4eeaa8b5f8aaf9174145bf43e1784b8fa00dc71d885a804e5ee9fa40b16349c146fb778cdf2d3aff021dfff5b403b510d0d0455468aeb98622b137dae857553ccd8883a7bc37520e06e515d22c954eba5025b8cc57ee59418ce7dc6bc41556bdb36bbca3e8774301fbcaa3b83b220809560987815f65286764703de0f3d524400a19b159610b11ef3e",
 "234c02ecbbfbafa3ed18510abd11fa724fcda2018a1a8342cf064bbde548b12b07df44ba7191d9606ef4081ffde5ad46a5069d9f7f543bedb9c861bf29c7e205132eda9382b0bc2c5c4b45f919cf3a9f1cb74151f6d551f4480c82b2cb24cc5b028aa76eb7b4ab24171ab3cdadb8356f",
 "32510ba9a7b2bba9b8005d43a304b5714cc0bb0c8a34884dd91304b8ad40b62b07df44ba6e9d8a2368e51d04e0e7b207b70b9b8261112bacb6c866a232dfe257527dc29398f5f3251a0d47e503c66e935de81230b59b7afb5f41afa8d661cb",
@@ -10,57 +13,99 @@ messages = [x.decode('hex') for x in ["315c4eeaa8b5f8aaf9174145bf43e1784b8fa00dc
 "466d06ece998b7a2fb1d464fed2ced7641ddaa3cc31c9941cf110abbf409ed39598005b3399ccfafb61d0315fca0a314be138a9f32503bedac8067f03adbf3575c3b8edc9ba7f537530541ab0f9f3cd04ff50d66f1d559ba520e89a2cb2a83",
 "32510ba9babebbbefd001547a810e67149caee11d945cd7fc81a05e9f85aac650e9052ba6a8cd8257bf14d13e6f0a803b54fde9e77472dbff89d71b57bddef121336cb85ccb8f3315f4b52e301d16e9f52f904"]]
 
-def countListElems(l):
-  result = {}
-  for x in l:
-    if x in result:
-      result[x] += 1
+def count_list_elems(l):
+    result = {}
+    for x in l:
+        if x in result:
+            result[x] += 1
+        else:
+            result[x] = 1
+    return result
+
+def highest_pairs(m):
+    """ m is a map with numeric values. Return a list of keys that have the largest value. """
+    maxv = max(m.values())
+    return filter(lambda k: m[k] == maxv, m.keys())
+
+def matrix_from_vectors(op, v):
+    """
+    Given vector v, build matrix
+    [[op(v1, v1), ..., op(v1, vn)],
+                  ...
+     [op(v2, v1), ..., op(vn, vn)]].
+     Note that if op is commutative, this is redundant: the matrix will be equal to its transpose.
+     The matrix is represented as a list of lists.
+    """
+    return [[op(vi, vj) for vj in v] for vi in v]
+
+def matrix_half_iter(m):
+    # Iterate upper right of a matrix. Exclude diagonal.
+    for i in xrange(len(m)):
+        for j in xrange(i + 1, len(m[i])):
+            yield ((i, j), m[i][j])
+
+def insert_into_histogram_dict(hist_dict, value):
+    if hist_dict.has_key(value):
+        hist_dict[value] += 1
     else:
-      result[x] = 1
-  return result
+        hist_dict[value] = 1
 
-def highestPairs(m):
-  maxv = max(m.values())
-  return filter(lambda k: m[k] == maxv, m.keys())
+def decrypt_with_fuzzy_key(fuzzy_key, message):
+    # zip will discard extra items from the longer message.
+    zipped = zip(fuzzy_key, message)
+    def decrypt_byte(fuzzy_key_byte, message_byte):
+        return map(lambda x: ord(message_byte) ^ x, fuzzy_key_byte)
+    return [decrypt_byte(fuzzy_key_byte, message_byte) for (fuzzy_key_byte, message_byte) in zipped]
 
-# NOTE: this is broken right now. Some out of bounds exception.
 def main():
-    mlength = len(messages[-2])
-    keyData = {x : [] for x in range(mlength)}
-    for i in range(len(messages)):
-      mi = messages[i]
-      for j in range(i + 1, len(messages)):
-        mj = messages[j]
-        x = cryptoutils.barxor(mi, mj)
-        for k in range(min(mlength, len(x))): 
-          if x[k] >= 65:
-            keyData[k].append(mi[k])
-            keyData[k].append(mj[k])
+    mlength = max(map(len, messages))
+    print "length of longest message " + str(mlength)
 
+    # the key-cracking idea here is that English text contains *a lot* of spaces. It turns out that
+    # if you xor an ascii space and all other ascii letters, the result is >= 65. So, go through
+    # all xored plaintexts, and if any bytes are >= 65, we record that as a potential space.
+
+    # We xor all pairs of messages. That gives us the xored plaintexts.
+    plaintext_xors = matrix_from_vectors(cryptoutils.barxor, messages)
+    # For each byte position k in the key, this keeps a list of ciphertext bytes at position k that
+    # are possibly spaces (see above). 
+    keyData = {x : {} for x in range(mlength)}
+    for ((i, j), plaini_xor_plainj) in matrix_half_iter(plaintext_xors):
+        for k in xrange(len(plaini_xor_plainj)):
+            if plaini_xor_plainj[k] >= 65:
+                # Now, as the comment above explained, we are confident that character k of either
+                # plaintext i is space, or character k of plaintext j is space. We don't know which
+                # one yet, so record character k of *ciphertext* i and j. If a ciphertext byte is
+                # already in the dictionary for position k, we just increment a counter.
+                insert_into_histogram_dict(keyData[k], messages[i][k])
+                insert_into_histogram_dict(keyData[k], messages[j][k])
+
+    # at this point, for each key position k, keyData contains counts of ciphertext bytes. If our
+    # assumption that each inserted pair contained one space is correct, the most common byte will
+    # be the space.
     key = [[] for x in range(len(keyData))]
-    for i in range(len(key)):
-      if len(keyData[i]) == 0:
-        print "no data for " + str(i)
-        continue
-      counts = countListElems(keyData[i])
-      spaceCiphers = highestPairs(counts)
-      print "possible ciphers for space at i: ", i, spaceCiphers
-      key[i] = map(lambda x: ord(x) ^ ord(' '), spaceCiphers)
+    for k in xrange(mlength):
+        possible_space_counts = keyData[k]
+        print "for key position {0}, here are the space counts {1}".format(k, possible_space_counts)
+        if len(possible_space_counts) == 0:
+            continue
+        # most of the time this will be a list of exactly one, but it's possible to have more than
+        # one "most common" byte (for example, if there was only one pair with space, we inserted
+        # the space cipher text and the other character's ciphertext with counts 1).
+        space_ciphertexts = highest_pairs(possible_space_counts)
+        key[k] = map(lambda x: ord(x) ^ ord(' '), space_ciphertexts)
 
+    # at this point, key[k] is a list that contains our guess of the the kth byte of the key. If we
+    # have no guess, it's empty. We may have more than one guess.
     print "key: ", key
-    zipped = zip(key, messages[-2])
-    allDecryptions = map(lambda (kiList, mi): map(lambda ki: chr(ord(mi) ^ ki), kiList), zipped)
-    for x in allDecryptions:
-      print x
-    print "".join(map(lambda l: l[0], allDecryptions))
+    fuzzy_decryption = decrypt_with_fuzzy_key(key, messages[0])
+    def pretty_print_fuzzy_decryption(dec):
+        return "".join(map(lambda x: chr(x[0]) if len(x) == 1 else '_', dec))
+    print pretty_print_fuzzy_decryption(fuzzy_decryption)
 
 if __name__ == "__main__":
-# TODO(dlila): this is not the cleanest way to organize my python packages.
 # TODO(dlila): translate this to haskell at some point (after fixing it)
-  import sys
-  sys.path.append('/home/dlila/courses/crypto1')
-  import cryptoutils
-  main()
+    main()
 #  c = range(65, 91) + range(97, 123)
 #  spaceXors = list(set(map(lambda (x, y): x ^ y, zip([32]*len(c), c))))
 #  print spaceXors, len(spaceXors)
