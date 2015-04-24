@@ -1,0 +1,8 @@
+Arduino and related code (includes the sensor web server - this location is not
+ideal, but fine for now).
+
+NOTE(dlila): arduino build and deployment tools are kind of sucky. The IDE is
+ridiculously particular about where code is located.
+TODO(dlila): Find out how to build this stuff from the command line and setup
+vim with ctags or get the eclipse plugin to work.
+Bonus points: build arduino with Google's balze.

@@ -1,0 +1,25 @@
+============================== RF24 Library Notes =============================
+We ran into a problem where writes were mysteriously failing in the simplest
+test program.
+The problem was that write() powers down the radio. This problem was not
+present in any of the example programs because they call startListening()
+and stopListening() very often (because they're poorly written). For some
+reason, these calls power up the radio. This powerDown-on-write is some nasty
+undocumented behaviour. TODO(dlila): file a bug to at least update docs?
+
+After this discovery, I started calling powerUp() before writes. This did not
+fix it. This is because the radio takes some time to really power up. Writes
+before that fail. Waiting 100 microseconds between powerUp() and write() brings
+the failure rate to around 1%. Failure rate at 150us is ~10%. 200us eliminates
+failures.
+
+Another minor problem with this library is that the write, just polls on the
+async implementation.
+
+Pipes are confusing. I have my receiver and sender using two different pipes,
+and it's working. Why? Shouldn't they use the same pipe? I tried using the same
+pipes, and seems no different - both work.
+
+There seems to be a buffer in the radio, but the library does not give us access
+to it. It just looks at the last element.
+

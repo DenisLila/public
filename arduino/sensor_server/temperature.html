@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Page Title</title>
+  <script type="text/javascript">
+  function get_temp(cb) {
+    var req = new XMLHttpRequest()
+    req.onload = function() {
+      cb(this.responseText)
+    }
+    req.open('get', 'temp_data', true)
+    req.send()
+  }
+  function set_temp(t) {
+    document.getElementById("temp").innerText = t
+  }
+  </script>
+</head>
+
+<body> 
+  <p onclick="get_temp(set_temp)">Temperature is <span id="temp"></span></p>
+</body>
+
+<script type='text/javascript'>
+  get_temp(set_temp)
+  // This sucks. Temperatures don't change this often. TODO(dlila): don't poll.
+  // Just make these calls blocking. If the server thinks the temperature has
+  // changed by a wide enough margin, it will just return the new value. This
+  // will give us both low update latency AND it will not be wasteful.
+  // TODO(dlila): add https and authentication to this server.
+  // TODO(dlila): android client.
+  // TODO(dlila): make a real server (NOT python -m SimpleHttpServer ಠ_ಠ)
+  window.setInterval(function() { get_temp(set_temp) }, 1500)
+</script>
+</html>
