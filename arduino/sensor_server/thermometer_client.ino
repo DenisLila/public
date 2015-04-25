@@ -45,6 +45,7 @@ void setup() {
 //      - Wait until they both complete.
 //      - Wake up, read temperature, and save it to memory.
 //      - Go back to sleep.
+//      - Encryption
 //   2) Use the radio's low power operation mode.
 //   3) Right now we sleep for INTERVAL millis, so each iteration will last INTERVAL plus whatever
 //      it takes to run. It would be nice to make each loop last INTERVAL millis.
