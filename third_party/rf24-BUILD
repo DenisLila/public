@@ -1,0 +1,8 @@
+load("/build-tools/ino", "ino_lib")
+
+ino_lib(
+    name = "rf24",
+    srcs = glob(["*.h"]) + glob(["*.cpp"]),
+    visibility = ["//visibility:public"],
+)
+

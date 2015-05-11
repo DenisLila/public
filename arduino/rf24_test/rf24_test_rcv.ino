@@ -1,6 +1,6 @@
 #include <SPI.h>
 #include <RF24.h>
-#include "printf.h"
+#include "setup_printf.h"
 
 #define PIPE ((uint64_t) 0xF0F0F0F0E1LL)
 #define INTERVAL 4000

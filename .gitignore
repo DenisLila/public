@@ -15,3 +15,9 @@ hs_err_pid*
 *.pydevproject
 *.pyc
 __pycache__
+
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-public
+bazel-testlogs

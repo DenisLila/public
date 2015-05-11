@@ -4,7 +4,7 @@
 #include <RF24.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include "printf.h"
+#include "setup_printf.h"
 
 // TODO(dlila): Some stuff in common with the thermo receiver here. Put it in libraries (along
 // with print.h - that should be in a printf.c file).

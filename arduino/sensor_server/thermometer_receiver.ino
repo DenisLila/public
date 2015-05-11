@@ -2,7 +2,7 @@
 // so we have to include it here.
 #include <SPI.h>
 #include <RF24.h>
-#include "printf.h"
+#include "setup_printf.h"
 
 // Local data.
 // Pipe for RF24.

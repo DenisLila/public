@@ -1,10 +1,10 @@
-#ifndef __PRINTF_H__
-#define __PRINTF_H__
+#include <Arduino.h>
+#include "setup_printf.h"
 
 // Enables printf using Serial.write.
 #ifdef ARDUINO
 
-int putc_func(char c, FILE * unused) {
+static int putc_func(char c, FILE * unused) {
   Serial.write(c);
   return c;
 } 
@@ -16,5 +16,3 @@ void setup_printf() {
 #else
 #error ARDUINO not defined
 #endif // ARDUINO
-
-#endif // __PRINTF_H__

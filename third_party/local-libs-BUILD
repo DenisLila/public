@@ -1,0 +1,17 @@
+# Build targets for repos that we can't put in third_party because they were
+# downloaded as source archives. Should be in ~/repos/local-only-libs
+
+load("/build-tools/ino", "ino_lib")
+
+ino_lib(
+    name = "dallastemp",
+    srcs = glob(["arduino/DallasTemperature/*.h"]) + glob(["arduino/DallasTemperature/*.cpp"]),
+    visibility = ["//visibility:public"],
+)
+
+ino_lib(
+    name = "onewire",
+    srcs = glob(["arduino/OneWire/*.h"]) + glob(["arduino/OneWire/*.cpp"]),
+    visibility = ["//visibility:public"],
+)
+
