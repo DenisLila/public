@@ -6,8 +6,14 @@
 #include <DallasTemperature.h>
 #include "setup_printf.h"
 
-// TODO(dlila): Some stuff in common with the thermo receiver here. Put it in libraries (along
-// with print.h - that should be in a printf.c file).
+#define __DEBUG
+#ifdef __DEBUG
+#define P(X) Serial.write(X)
+#else
+#define P(X)
+#endif
+
+// TODO(dlila): Some stuff in common with the thermo receiver here. Put it in libraries.
 
 // Local data.
 // Pipe for RF24.
@@ -27,6 +33,7 @@ DeviceAddress addr0;
 
 // Function declarations.
 void print_hex(uint8_t *array, size_t len);
+void error_loop();
 int init_thermos();
 int init_radio();
 
@@ -34,33 +41,41 @@ void setup() {
   Serial.begin(57600);
   setup_printf();
 
-  init_thermos();
+  if (!init_thermos()) {
+    error_loop();
+  }
   init_radio();
 }
 
 // Right now this is a naive implementation where we just read temperature every INTERVAL millis
 // TODO(dlila): Lots of room for improvement here:
-//   1) Do both the temperature reading and the temperature sending async:
-//      - Start both operations (send the previous iteration's temperature reading).
-//      - Wait until they both complete.
-//      - Wake up, read temperature, and save it to memory.
-//      - Go back to sleep.
-//      - Encryption
 //   2) Use the radio's low power operation mode.
 //   3) Right now we sleep for INTERVAL millis, so each iteration will last INTERVAL plus whatever
 //      it takes to run. It would be nice to make each loop last INTERVAL millis.
+//   4) Encryption
 void loop() {
+  unsigned long start = millis();
+  // Just broadcast. Don't call the "byAddress" method. That will do a pointless scratchpad read.
+  // Note that this uses the highest resolution in the thermometer chain. This is not a problem
+  // in the single thermometer case.
   thermos.requestTemperatures();
-  Serial.print("temp reading: ");
+  float temp = thermos.getTempC(addr0);  
+  if (!radio.write(&temp, PAYLOAD_SIZE)) {
+    P("Error sending payload");
+  }
   float temp = thermos.getTempC(addr0);
-  Serial.println(temp);
+  P("temp reading: ");
+  P(temp);
 
-  // See notes in test programs. TODO(dlila): transfer those to a README or something here.
+  // See notes in the RF24 library readme I wrote.
   radio.powerUp();
   delayMicroseconds(200);
   if (!radio.write(&temp, PAYLOAD_SIZE)) {
-    Serial.println("Error sending payload");
+    P("Error sending payload");
   }
+  
+  unsigned long elapsed = millis() - start;
+  delay(max(0, INTERVAL - elapsed);
   delay(INTERVAL);
 }
 
@@ -85,17 +100,24 @@ int init_thermos() {
     Serial.print('\n');
     return true;
   } else {
-    // In this case we'll just be tring to read from a zeroed address in the loop.
-    // Not ideal, but not a problem either.
     printf("error reading address at idx 0\n");
     return false;
   }
 }
 
-int init_radio() {
+void init_radio() {
   radio.begin();
   radio.setPayloadSize(PAYLOAD_SIZE);
   radio.openWritingPipe(PIPE);
+#ifdef DEBUG
   radio.printDetails();
+#endif
+}
+
+void error_loop() {
+  while (1) {
+    Serial.println("error_loop");
+    delay(1000);
+  }
 }
 

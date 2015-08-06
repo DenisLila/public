@@ -32,6 +32,7 @@ ino_lib = rule(
 def ino_bin_impl(ctx):
   # create the ino project folder with empty lib and src directories.
   inofolder = ctx.outputs.inofolder.path
+  print(ctx.outputs.inofolder.path)
   cmd = "set -e; rm -rf %s; mkdir %s;" % (inofolder, inofolder)
   cmd += "mkdir %s/lib; mkdir %s/src;" % (inofolder, inofolder)
   # Copy the .ino file to the src directory.

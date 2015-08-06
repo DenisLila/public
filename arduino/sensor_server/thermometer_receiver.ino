@@ -19,7 +19,6 @@ int init_radio();
 
 void setup() {
   Serial.begin(57600);
-  setup_printf();
   init_radio();
 }
 
