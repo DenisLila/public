@@ -6,6 +6,11 @@
 #include <DallasTemperature.h>
 #include "setup_printf.h"
 
+typedef struct _temp_reading {
+  uint32_t idx;
+  float temp;
+} temp_reading;
+
 #define __DEBUG
 #ifdef __DEBUG
 #define P(X) Serial.write(X)
@@ -21,7 +26,7 @@
 // How long to sleep in each loop.
 #define INTERVAL 1500
 // Packet size. Each thermometer reading is a float. No reason to make this bigger for now.
-#define PAYLOAD_SIZE ((uint8_t)sizeof(float))
+#define PAYLOAD_SIZE ((uint8_t)sizeof(temp_reading))
 // Radio is using pins 9 and 10, as well as SPI pins.
 RF24 radio(9, 10);
 // We're assuming there is exactly one thermometer right now, at index 0. Using pin 2.
@@ -29,7 +34,8 @@ OneWire one_wire(2);
 DallasTemperature thermos(&one_wire);
 // The internal address of the thermometer. Shouldn't really need it if only using 1
 // thermometer, but the dallas temperature library doesn't provide broadcast apis.
-DeviceAddress addr0;
+DeviceAddress addr0; // this is a pointer type.
+temp_reading cur_reading;
 
 // Function declarations.
 void print_hex(uint8_t *array, size_t len);
@@ -44,23 +50,23 @@ void setup() {
   if (!init_thermos()) {
     error_loop();
   }
+  memset(&cur_reading, 0, PAYLOAD_SIZE);
   init_radio();
 }
 
 // Right now this is a naive implementation where we just read temperature every INTERVAL millis
 // TODO(dlila): Lots of room for improvement here:
 //   2) Use the radio's low power operation mode.
-//   3) Right now we sleep for INTERVAL millis, so each iteration will last INTERVAL plus whatever
-//      it takes to run. It would be nice to make each loop last INTERVAL millis.
 //   4) Encryption
 void loop() {
   unsigned long start = millis();
+  cur_reading.idx++;
   // Just broadcast. Don't call the "byAddress" method. That will do a pointless scratchpad read.
   // Note that this uses the highest resolution in the thermometer chain. This is not a problem
   // in the single thermometer case.
   thermos.requestTemperatures();
-  float temp = thermos.getTempC(addr0);  
-  if (!radio.write(&temp, PAYLOAD_SIZE)) {
+  cur_reading.temp = thermos.getTempC(addr0);  
+  if (!radio.write(&cur_reading, PAYLOAD_SIZE)) {
     P("Error sending payload");
   }
   float temp = thermos.getTempC(addr0);
