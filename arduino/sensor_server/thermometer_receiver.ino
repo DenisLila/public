@@ -3,19 +3,10 @@
 #include <SPI.h>
 #include <RF24.h>
 #include "setup_printf.h"
-
-typedef struct _temp_reading {
-  uint32_t idx;
-  float temp;
-} temp_reading;
+//#define __DEBUG
+#include "common.h"
 
 // Local data.
-// Pipe for RF24.
-#define PIPE ((uint64_t) 0xE8E8F0F0E1LL)
-// How long to sleep in each loop.
-#define INTERVAL 1500
-// Packet size. Each thermometer reading is a float. No reason to make this bigger for now.
-#define PAYLOAD_SIZE ((uint8_t)sizeof(temp_reading))
 // Radio is using pins 9 and 10, as well as SPI pins.
 RF24 radio(9, 10);
 temp_reading last_reading;
@@ -47,6 +38,8 @@ int init_radio() {
   radio.setPayloadSize(PAYLOAD_SIZE);
   radio.openReadingPipe(1, PIPE);
   radio.startListening();
-//  radio.printDetails();
+#ifdef DEBUG
+  radio.printDetails();
+#endif
 }
 

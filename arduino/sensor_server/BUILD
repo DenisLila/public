@@ -1,4 +1,9 @@
-load("/build-tools/ino", "ino_bin")
+load("/build-tools/ino", "ino_bin", "ino_lib")
+
+ino_lib(
+    name = "common",
+    srcs = [ ":common.h" ],
+)
 
 ino_bin(
     name = "therm_client",

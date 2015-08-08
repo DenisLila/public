@@ -5,28 +5,9 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "setup_printf.h"
+//#define __DEBUG
+#include "common.h"
 
-typedef struct _temp_reading {
-  uint32_t idx;
-  float temp;
-} temp_reading;
-
-#define __DEBUG
-#ifdef __DEBUG
-#define P(X) Serial.write(X)
-#else
-#define P(X)
-#endif
-
-// TODO(dlila): Some stuff in common with the thermo receiver here. Put it in libraries.
-
-// Local data.
-// Pipe for RF24.
-#define PIPE ((uint64_t) 0xE8E8F0F0E1LL)
-// How long to sleep in each loop.
-#define INTERVAL 1500
-// Packet size. Each thermometer reading is a float. No reason to make this bigger for now.
-#define PAYLOAD_SIZE ((uint8_t)sizeof(temp_reading))
 // Radio is using pins 9 and 10, as well as SPI pins.
 RF24 radio(9, 10);
 // We're assuming there is exactly one thermometer right now, at index 0. Using pin 2.
@@ -115,7 +96,7 @@ void init_radio() {
   radio.begin();
   radio.setPayloadSize(PAYLOAD_SIZE);
   radio.openWritingPipe(PIPE);
-#ifdef DEBUG
+#ifdef __DEBUG
   radio.printDetails();
 #endif
 }
