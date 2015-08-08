@@ -6,13 +6,13 @@
 //#define __DEBUG
 #include "common.h"
 
+// Function declarations.
+int init_radio();
+
 // Local data.
 // Radio is using pins 9 and 10, as well as SPI pins.
 RF24 radio(9, 10);
 temp_reading last_reading;
-
-// Function declarations.
-int init_radio();
 
 void setup() {
   Serial.begin(57600);
@@ -21,19 +21,19 @@ void setup() {
 }
 
 void loop() {
-  // TODO(dlila): we know the sender INTERVAL. No need to poll here.
-  if (radio.available()) {
-    radio.read(&last_reading, PAYLOAD_SIZE);
-    // TODO(dlila): this is ridiculous. This is how we're communicating with the
-    // server. This should be more parser friendly.
-    Serial.print(last_reading.idx);
-    Serial.print(',');
-    Serial.print(last_reading.loop_start);
-    Serial.print(',');
-    Serial.print(last_reading.millis);
-    Serial.print(',');
-    Serial.println(last_reading.temp);
+  while (!radio.available()) {
+    // Wait for data to be available.
   }
+  radio.read(&last_reading, PAYLOAD_SIZE);
+  Serial.print(last_reading.idx);
+  Serial.print(',');
+  Serial.print(last_reading.loop_start);
+  Serial.print(',');
+  Serial.print(last_reading.millis);
+  Serial.print(',');
+  Serial.println(last_reading.temp);
+  // Wait for the next transmission (minus 100 so we don't miss it because of timing imprecisions)
+  delay(INTERVAL - 100);
 }
 
 // Function definitions.
