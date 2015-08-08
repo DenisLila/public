@@ -9,6 +9,7 @@ ino_bin(
     name = "therm_client",
     src = ":thermometer_client.ino",
     inolibs = [
+        ":common",
         "//arduino/setup_printf",
         "//external:rf24",
         "//external:onewire",
@@ -20,6 +21,7 @@ ino_bin(
     name = "therm_receiver",
     src = ":thermometer_receiver.ino",
     inolibs = [
+        ":common",
         "//arduino/setup_printf",
         "//external:rf24",
         "//external:onewire",

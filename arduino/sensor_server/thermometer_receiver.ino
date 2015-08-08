@@ -28,6 +28,10 @@ void loop() {
     // server. This should be more parser friendly.
     Serial.print(last_reading.idx);
     Serial.print(',');
+    Serial.print(last_reading.loop_start);
+    Serial.print(',');
+    Serial.print(last_reading.millis);
+    Serial.print(',');
     Serial.println(last_reading.temp);
   }
 }

@@ -22,7 +22,7 @@ temp_reading cur_reading;
 void print_hex(uint8_t *array, size_t len);
 void error_loop();
 int init_thermos();
-int init_radio();
+void init_radio();
 
 void setup() {
   Serial.begin(57600);
@@ -40,29 +40,26 @@ void setup() {
 //   2) Use the radio's low power operation mode.
 //   4) Encryption
 void loop() {
-  unsigned long start = millis();
+  uint32_t start = millis();
+  cur_reading.loop_start = start;
   cur_reading.idx++;
   // Just broadcast. Don't call the "byAddress" method. That will do a pointless scratchpad read.
   // Note that this uses the highest resolution in the thermometer chain. This is not a problem
   // in the single thermometer case.
   thermos.requestTemperatures();
   cur_reading.temp = thermos.getTempC(addr0);  
-  if (!radio.write(&cur_reading, PAYLOAD_SIZE)) {
-    P("Error sending payload");
-  }
-  float temp = thermos.getTempC(addr0);
   P("temp reading: ");
-  P(temp);
+  P(cur_reading.temp);
 
   // See notes in the RF24 library readme I wrote.
   radio.powerUp();
   delayMicroseconds(200);
-  if (!radio.write(&temp, PAYLOAD_SIZE)) {
+  cur_reading.millis = millis();
+  if (!radio.write(&cur_reading, PAYLOAD_SIZE)) {
     P("Error sending payload");
   }
-  
-  unsigned long elapsed = millis() - start;
-  delay(max(0, INTERVAL - elapsed);
+  uint32_t elapsed = millis() - start;
+  delay(max(0, INTERVAL - elapsed));
   delay(INTERVAL);
 }
 

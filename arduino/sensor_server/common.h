@@ -4,11 +4,13 @@
 #ifdef __DEBUG
 #define P(X) Serial.write(X)
 #else
-#define P(Xj
+#define P(X)
 #endif
 
 typedef struct _temp_reading {
   uint32_t idx;
+  uint32_t loop_start;
+  uint32_t millis;
   float temp;
 } temp_reading;
 
