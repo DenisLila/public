@@ -1,16 +1,20 @@
 #ifndef __THERMO_COMMON_
 #define __THERMO_COMMON_
 
+//#define __DEBUG
 #ifdef __DEBUG
-#define P(X) Serial.write(X)
+#define P(X) Serial.println(X)
 #else
 #define P(X)
 #endif
 
 typedef struct _temp_reading {
+  // transmitter loop count
   uint32_t idx;
+  // time in millis at the start of the transmitter loop
   uint32_t loop_start;
-  uint32_t millis;
+  // time just before transmission
+  uint32_t tx_millis;
   float temp;
 } temp_reading;
 

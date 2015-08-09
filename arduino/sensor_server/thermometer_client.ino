@@ -5,7 +5,6 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include "setup_printf.h"
-//#define __DEBUG
 #include "common.h"
 
 // Radio is using pins 9 and 10, as well as SPI pins.
@@ -40,8 +39,7 @@ void setup() {
 //   2) Use the radio's low power operation mode.
 //   4) Encryption
 void loop() {
-  uint32_t start = millis();
-  cur_reading.loop_start = start;
+  cur_reading.loop_start = millis();
   cur_reading.idx++;
   // Just broadcast. Don't call the "byAddress" method. That will do a pointless scratchpad read.
   // Note that this uses the highest resolution in the thermometer chain. This is not a problem
@@ -54,13 +52,12 @@ void loop() {
   // See notes in the RF24 library readme I wrote.
   radio.powerUp();
   delayMicroseconds(200);
-  cur_reading.millis = millis();
+  cur_reading.tx_millis = millis();
   if (!radio.write(&cur_reading, PAYLOAD_SIZE)) {
     P("Error sending payload");
   }
-  uint32_t elapsed = millis() - start;
+  uint32_t elapsed = millis() - cur_reading.loop_start;
   delay(max(0, INTERVAL - elapsed));
-  delay(INTERVAL);
 }
 
 // Function definitions.

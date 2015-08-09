@@ -3,7 +3,6 @@
 #include <SPI.h>
 #include <RF24.h>
 #include "setup_printf.h"
-//#define __DEBUG
 #include "common.h"
 
 // Function declarations.
@@ -17,6 +16,7 @@ temp_reading last_reading;
 void setup() {
   Serial.begin(57600);
   init_radio();
+  setup_printf();
   memset(&last_reading, 0, PAYLOAD_SIZE);
 }
 
@@ -25,11 +25,12 @@ void loop() {
     // Wait for data to be available.
   }
   radio.read(&last_reading, PAYLOAD_SIZE);
+  // for whatever reason, printf didn't work here.
   Serial.print(last_reading.idx);
   Serial.print(',');
   Serial.print(last_reading.loop_start);
   Serial.print(',');
-  Serial.print(last_reading.millis);
+  Serial.print(last_reading.tx_millis);
   Serial.print(',');
   Serial.println(last_reading.temp);
   // Wait for the next transmission (minus 100 so we don't miss it because of timing imprecisions)
@@ -42,7 +43,7 @@ int init_radio() {
   radio.setPayloadSize(PAYLOAD_SIZE);
   radio.openReadingPipe(1, PIPE);
   radio.startListening();
-#ifdef DEBUG
+#ifdef __DEBUG // from common.h
   radio.printDetails();
 #endif
 }
