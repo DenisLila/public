@@ -21,8 +21,8 @@ def alternating(v1, v2):
   idx = 0
   values = [v1, v2]
   while True:
-    yield "%d,%d,%d,%f" % (idx, idx, idx, values[idx % 2])
-    idx = (idx + 1)
+    yield "%d,%d,%d,%f\n" % (idx, idx, idx, values[idx % 2])
+    idx = idx + 1
 
 def format_temp(temp):
   return 
