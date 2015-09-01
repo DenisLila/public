@@ -1,3 +1,5 @@
+package com.dlila.pwdgen;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.security.SecureRandom;
@@ -27,7 +29,7 @@ public class PwdGen {
     StringBuilder b = new StringBuilder(LEN);
     for (int i = 0; i < LEN; i++) {
       b.append(CHARS.charAt(random.nextInt(CHARS.length())));
-    }   
+    }
     System.out.println(b.toString());
   }
 }
