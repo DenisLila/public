@@ -30,6 +30,7 @@ public class Server {
     server.bind(new InetSocketAddress(9999), 5);
     server.setExecutor(null);
     // TODO(dlila): this seems to handle /temp_data as well (which breaks our page).
+    // TODO(dlila): finish this.
     server.createContext("/", new HttpHandler() {
       @Override
       public void handle(HttpExchange ex) throws IOException {
