@@ -13,8 +13,10 @@ class TempReader {
   private final InputStream is;
   private final Splitter inputLineSplitter;
   
-  // TODO(dlila): how do we export this to the outside world cleanly?
-  // (don't forget concurrency).
+  // TODO(dlila): how do we export this to the outside world cleanly? Just expecting users to poll
+  // isn't very nice. Also, no thought has been given here to initialization, shutdown, and error
+  // handling. Do that.
+
   private double currentTemp = Double.NaN;
 
   // TODO(dlila): don't forget to make this buffered.
@@ -25,9 +27,10 @@ class TempReader {
 
   public void readTemps() throws IOException {
     LineReader lineReader = new LineReader(new InputStreamReader(is));
-    String line = null;
-    do {
-      List<String> split = inputLineSplitter.splitToList(lineReader.readLine());
+    String line = lineReader.readLine();
+    while (null != (line = lineReader.readLine())) {
+      System.out.println("read line: " + line);
+      List<String> split = inputLineSplitter.splitToList(line);
       try {
         synchronized(this) {
           currentTemp = Double.parseDouble(split.get(split.size() - 1));
@@ -35,7 +38,7 @@ class TempReader {
       } catch (NumberFormatException e) {
         throw new IOException(e);
       }
-    } while (line != null);
+    };
   }
 
   public synchronized double getCurrentTemp() {
