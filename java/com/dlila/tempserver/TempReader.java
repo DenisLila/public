@@ -29,11 +29,17 @@ class TempReader {
     do {
       List<String> split = inputLineSplitter.splitToList(lineReader.readLine());
       try {
-        currentTemp = Double.parseDouble(split.get(split.size() - 1));
+        synchronized(this) {
+          currentTemp = Double.parseDouble(split.get(split.size() - 1));
+        }
       } catch (NumberFormatException e) {
         throw new IOException(e);
       }
     } while (line != null);
+  }
+
+  public synchronized double getCurrentTemp() {
+    return currentTemp;
   }
 }
 

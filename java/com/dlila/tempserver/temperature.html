@@ -8,7 +8,7 @@
     req.onload = function() {
       cb(this.responseText)
     }
-    req.open('get', 'temp_data', true)
+    req.open('get', 'temperature', true)
     req.send()
   }
   function set_temp(t) {
