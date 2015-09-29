@@ -27,7 +27,7 @@ class TempReader {
 
   public void readTemps() throws IOException {
     LineReader lineReader = new LineReader(new InputStreamReader(is));
-    String line = lineReader.readLine();
+    String line;
     while (null != (line = lineReader.readLine())) {
       System.out.println("read line: " + line);
       List<String> split = inputLineSplitter.splitToList(line);
@@ -39,6 +39,10 @@ class TempReader {
         throw new IOException(e);
       }
     };
+  }
+
+  private synchronized void setTemp(double temp) {
+    this.currentTemp = temp;
   }
 
   public synchronized double getCurrentTemp() {

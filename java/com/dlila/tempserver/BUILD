@@ -1,7 +1,7 @@
 java_binary(
     name = "tempserver",
     srcs = glob(["*.java"]),
-    resources = ["temperature.html"],
+#    resources = ["temperature.html"],
     deps = [
         "//third_party:guava",
     ],
