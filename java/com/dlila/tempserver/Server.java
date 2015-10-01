@@ -31,6 +31,13 @@ import com.sun.net.httpserver.HttpContext;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.Filter;
 
+
+// TODO(dlila): working at this low a level is proving to be a waste of time. Start using
+// a real web server framework. Things to try: google web toolkit, django, haskell.
+// TODO(dlila): I'm a bit weary about running this stuff on my personal machine. Probably better to
+// put the site on appengine, and just have a local privileged app that uploads the current
+// temperature there.
+
 // IMPORTANT: this will not work if run using bazel run :tempserver. Must be run from the generated
 // script in bazel-bin.
 public class Server {
@@ -60,9 +67,6 @@ public class Server {
       }
     }
   }
-
-  // TODO(dlila): working at this low a level is proving to be a waste of time. Start using
-  // a real web server framework (google web toolkit or django).
 
   private static String readAndClose(InputStream is) throws IOException {
     // hardcoding utf8? TODO(dlila): this is wrong.
