@@ -78,8 +78,6 @@ public class Server {
     HttpServer server = HttpServer.create();
     server.bind(new InetSocketAddress(9999), 5);
     server.setExecutor(null);
-    // TODO(dlila): this seems to handle /temp_data as well (which breaks our page).
-    // TODO(dlila): finish this.
     Filter loggingFilter = new Filter() {
       @Override
       public String description() {
@@ -107,7 +105,6 @@ public class Server {
     };
 
     // TODO(dlila): lots of boilerplate in the HttpHandler definition. Make a request type.
-    // TODO(dlila): This is just serving a file. Write a generic file server.
 
     // TODO(dlila): we're serving the initial page without the temperature data. This is
     // not necessary - we could just put it in there.
@@ -121,6 +118,7 @@ public class Server {
 
     // TODO(dlila): feels wrong to get the server's data from System.in. Maybe the temperature
     // parser should upload it through some API that is only exposed on the local machine.
+    // (use grpc).
     final TempReader tempReader = new TempReader(new BufferedInputStream(System.in));
     Thread tempReaderThread = new Thread(new Runnable() {
       @Override
