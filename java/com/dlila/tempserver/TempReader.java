@@ -14,12 +14,10 @@ class TempReader {
   private final Splitter inputLineSplitter;
   
   // TODO(dlila): how do we export this to the outside world cleanly? Just expecting users to poll
-  // isn't very nice. Also, no thought has been given here to initialization, shutdown, and error
-  // handling. Do that.
+  // isn't very nice.
 
   private double currentTemp = Double.NaN;
 
-  // TODO(dlila): don't forget to make this buffered.
   public TempReader(InputStream is) {
     this.is = is;
     this.inputLineSplitter = Splitter.on(',');
@@ -32,11 +30,10 @@ class TempReader {
       System.out.println("read line: " + line);
       List<String> split = inputLineSplitter.splitToList(line);
       try {
-        synchronized(this) {
-          currentTemp = Double.parseDouble(split.get(split.size() - 1));
-        }
+        setTemp(Double.parseDouble(split.get(split.size() - 1)));
       } catch (NumberFormatException e) {
-        throw new IOException(e);
+        // ignore bad lines.
+        System.out.println(String.format("could not parse double in line: %s", line));
       }
     };
   }

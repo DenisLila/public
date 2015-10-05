@@ -21,3 +21,5 @@ bazel-genfiles
 bazel-out
 bazel-public
 bazel-testlogs
+
+*.sqlite3
