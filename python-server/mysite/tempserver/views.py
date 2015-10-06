@@ -10,6 +10,7 @@ def get_temp_req(req):
   return HttpResponse(get_temp())
 
 def get_temp():
+  # TODO(dlila): implement this properly
   return "22.1"
 
 # Create your views here.
