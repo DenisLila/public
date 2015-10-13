@@ -33,5 +33,13 @@ class Util {
     public static <F, S> Pair<F, S> of(F f, S s) {
       return new Pair<F, S>(f, s);
     }
+
+    public F f() {
+      return f;
+    }
+
+    public S s() {
+      return s;
+    }
   }
 }
