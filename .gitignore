@@ -23,3 +23,8 @@ bazel-public
 bazel-testlogs
 
 *.sqlite3
+
+# eclipse java support
+java/bin
+*.classpath
+

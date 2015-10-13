@@ -1,14 +1,13 @@
-package com.dlila.tempserver;
+package com.dlila.server.common;
 
 import java.io.File;
 import java.io.IOException;
 
 import com.google.common.io.Files;
-
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-class FileServingHandler implements HttpHandler {
+public class FileServingHandler implements HttpHandler {
 
   private final String path;
 
@@ -33,4 +32,3 @@ class FileServingHandler implements HttpHandler {
     }
   }
 }
-

@@ -1,7 +1,7 @@
-package com.dlila.tempserver;
+package com.dlila.server.temperature;
 
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
 
@@ -12,7 +12,7 @@ class TempReader {
 
   private final InputStream is;
   private final Splitter inputLineSplitter;
-  
+
   // TODO(dlila): how do we export this to the outside world cleanly? Just expecting users to poll
   // isn't very nice.
 
