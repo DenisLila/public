@@ -10,6 +10,11 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
 public class TemperatureService {
+  
+  private TemperatureService() {
+    // static methods only. This class is similar to a guice module. I wonder how long I'll hold
+    // out before guicifying/daggerifying this whole thing.
+  }
 
   public static ServerBuilder newBuilder() {
     // TODO(dlila): feels wrong to get the server's data from System.in. Maybe the temperature
