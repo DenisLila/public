@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import com.dlila.server.common.ServerBuilder;
+import com.dlila.server.fileupload.FileUploadService;
 import com.dlila.server.temperature.TemperatureService;
 import com.sun.net.httpserver.HttpServer;
 
@@ -25,7 +26,8 @@ public class Server {
     server.setExecutor(null);
 
     ServerBuilder serverBuilder = new ServerBuilder("/")
-        .add("temperature", TemperatureService.newBuilder());
+        .add("temperature", TemperatureService.newBuilder())
+        .add("fileupload", FileUploadService.newBuilder());
 
     serverBuilder.addToServer(server);
 
