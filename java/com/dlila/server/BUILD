@@ -1,7 +1,7 @@
 java_binary(
     name = "server_bin",
     runtime_deps = [":server"],
-    main_class = "com.dlila.tempserver.Server",
+    main_class = "com.dlila.server.Server",
 )
 
 java_library(

@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Closeables;
 
-class Util {
+public class Util {
   private Util() {}
 
   public static String readAndClose(InputStream is) throws IOException {

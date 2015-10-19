@@ -51,7 +51,7 @@ public class ServerBuilder {
   public ServerBuilder add(String urlChunk, HttpHandler handler) {
     checkNotNull(urlChunk, "null urlchunk");
     checkNotNull(handler, "null handler");
-    ServerBuilder previous = children.put(urlChunk, new ServerBuilder(urlChunk, handler));
+    ServerBuilder previous = children.put(urlChunk, new ServerBuilder("", handler));
     if (previous != null) {
       throw new IllegalArgumentException("handler already exists for url chunk: " + urlChunk);
     }
@@ -62,7 +62,6 @@ public class ServerBuilder {
       StringBuilder currentPath, Map<String, HttpHandler> map) {
     currentPath.append(prefix);
     if (handler != null) {
-      checkNotNull(children);
       String finalUrl = currentPath.toString();
       HttpHandler previous = map.put(finalUrl, handler);
       if (previous != null) {
@@ -83,6 +82,7 @@ public class ServerBuilder {
   public Map<String, HttpHandler> addToServer(HttpServer server) {
     Map<String, HttpHandler> map = build(new StringBuilder(), new HashMap<String, HttpHandler>());
     for (Map.Entry<String, HttpHandler> entry : map.entrySet()) {
+      System.out.println(String.format("adding handler for %s", entry.getKey()));
       server.createContext(entry.getKey(), entry.getValue());
     }
     return map;
