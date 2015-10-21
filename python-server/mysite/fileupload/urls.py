@@ -1,10 +1,10 @@
-from django import url
+from django.conf.urls import url
 
 from . import views
 
 urlpatterns = [
   url(r'^$', views.upload_page),
   url(r'upload_page$', views.upload_page),
-  url(r'upload$', views.upload),
+  url(r'upload$', views.upload, name='upload'),
 ]
 
