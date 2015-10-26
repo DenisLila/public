@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+import secrets
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -19,9 +20,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# TODO(dlila): how do people manage this w.r.t. open source code.
-# Does this file just not get checked in?
-SECRET_KEY = 'mnxu()u2*fkk4n@ob3j%d^nq8)t1x14y3xbv0eq)+5u!3#vial'
+SECRET_KEY = secrets.DJANGO_SECRET_KEY
+#CSRF_COOKIE_SECURE = True
+#SESSION_COOKIE_SECURE = True
+#SECURE_SSL_REDIRECT = True
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,6 +42,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'tempserver',
     'fileupload',
+    'mod_wsgi.server',
 )
 
 MIDDLEWARE_CLASSES = (
