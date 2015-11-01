@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload file.</title>
+</head>
+
+<body> 
+  <div id='inputlist'>
+    <div id='i1'>
+      <input type='file' class='upload_file' style='border-style:solid'></input>
+      <button type='button' hidden='true'>Remove this file</button>
+    </div>
+  </div>
+
+  <button id='add_line_button' type='button'>add file</button>
+</body>
+<script type='text/javascript'>
+  // TODO(dlila): make all this better (own javascript file, and
+  // look into some libraries (jquery)).
+
+  // should be singleton.
+  var ListBuilder = function() {
+    this.inputList = document.getElementById('inputlist');
+    this.itemTemplate = document.getElementById('i1');
+    this.addButton = document.getElementById('add_line_button');
+
+    var removeFileListener = function() {
+      var par = this.parentElement;
+      par.parentElement.removeChild(par);
+    };
+
+    var builder = this;
+    this.addButton.addEventListener('click', function() {
+      var toadd = builder.itemTemplate.cloneNode(true);
+      var removeButton = toadd.getElementsByTagName('button')[0];
+      removeButton.addEventListener('click', removeFileListener);
+      removeButton.hidden = false;
+      inputlist.appendChild(toadd);
+    });
+  };
+
+  var b = new ListBuilder();
+
+  // TODO(dlila): submit button & implementation.
+  // 1. No removal of files once submit is clicked.
+  // 2. UI should just change to something that monitors upload.
+  // 3. Can cancel upload and return to file chooser page.
+  // 4. If a file fails uploading for whatever reason, do not fail the whole upload.
+  // 5. rate limiting would be really nice.
+  // 6. Problem: if we just allocate files at the begnning, that is an attack: clients can just
+  //    tell us files are extremely large and make us waste disk without sending us anything
+  //    A solution could be to just append chunks to files as they are sent, and then re-order
+  //    the chunks after upload completion (could keep the chunk order in separate files).
+  // 7. Problem: how to determine chunk sizes? Predetermined? this makes rate limiting harder.
+  // 8. Problem: do we send file sizes in startUpload? If yes, we then upload completion can
+  //    be implicit, but there is more bookkeeping on the server. If not, we need a CompleteUpload
+  //    RPC.
+  // 9. Upload state: should this be kept on the client? How does an upload resume after browser
+  //    crash?
+  // 10. Problem: what happens if a file is modified in mid-upload?
+  // 
+  // Ok, for now, let's just keep it simple, give up on rate limiting, and have 1 MB chunk sizes.
+  //
+  // Server interface:
+  // startUpload: {string[] filenames} -> {string uploadId}
+  //   (errors: file dups?, server refused?, too large?)
+  // uploadChunk: {string uploadId, int32 fileIdx, int64 chunkIdx} -> {}
+  //   (errors: bad chunk size (i.e. =/= 1 mb))
+  // getUploadState {string uploadId} -> {list<tuple<fileIdx, chunkIdx>>}
+</script>
+</html>
+
