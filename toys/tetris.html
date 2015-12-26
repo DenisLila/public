@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title> Snake </title>
+  <style type="text/css">
+    canvas { border: 1px solid black; }
+  </style>
+</head>
+<body onload='initGame()'>
+  <div id='canvas-div'>
+    <canvas id='canvas'/>
+  </div>
+
+  <button onclick='startGame()'> Go </button>
+</body>
+
+<script type='text/javascript'>
+
+var game = null;
+var gameView = null;
+
+var Piece = function(x, y) {
+  this.x = x;
+  this.y = y;
+};
+
+Piece.prototype.move = function(dx, dy) {
+  this.x += dx;
+  this.y += dy;
+};
+
+Piece.prototype.canMove = function(dx, dy, game) {
+  var squares = this.squares();
+  for (var i = 0; i < squares.length; i++) {
+    var s = squares[i];
+    s.x += dx;
+    s.y += dy;
+    if (s.y >= game.h || s.x < 0 || s.x >= game.w || game.grid[s.y][s.x] == 1) {
+      return false;
+    }
+  }
+  return true;
+};
+
+Piece.prototype.squares = function() {
+  return [{x: this.x, y: this.y}];
+}
+
+var makeGrid = function(w, h) {
+  var result = [];
+  for (var i = 0; i < h; i++) {
+    result.push(new Uint8Array(w));
+  }
+  return result;
+};
+
+var allSet = function(a) {
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] == 0) {
+      return false;
+    }
+  }
+  return true;
+};
+
+var initGame = function() {
+  // Make prototypes for these.
+  game = {
+    h: 12, // TODO(dlila): find the actual tetris dimensions.
+    w: 8,
+    grid: makeGrid(8, 12), // TODO: keep in sync with w,h. find a cleaner way.
+    piece: null,
+    pieceMoveTimeout: 200,
+    isOver: false,
+    start: function() {
+      var g = this;
+      var loop_ = function() {
+        // We are heading in a direction where we have to have
+        // if(g.isOver) sprinkled all over. That is not good.
+        if (g.isOver) {
+          return;
+        }
+        if (!g.piece) {
+          g.piece = new Piece(5, 0);
+          if (!g.piece.canMove(0, 0, g)) {
+            g.over = true;
+            return;
+          }
+        } else {
+          g.move(0, 1);
+        }
+        
+        setTimeout(loop_, g.pieceMoveTimeout);
+      }
+      setTimeout(loop_, this.pieceMoveTimeout);
+    },
+    // TODO: asserts
+    fix: function() {
+      // TODO(dlila): right now, our piece comes out all at a time.
+      // It needs to come out gradually, one row at a time.
+      // Right now, this function is guaranteed to be able to house the piece in the grid.
+      var squares = this.piece.squares();
+      var yspan = {};
+      for (var i = 0; i < squares.length; i++) {
+        // TODO: make a grid class.
+        var x = squares[i].x;
+        var y = squares[i].y;
+        // assert this.grid[y][x] == 0
+        this.grid[y][x] = 1; 
+        yspan[y] = true;
+      }
+      for (var y in yspan) {
+        // TODO: collapse.
+        if (allSet(this.grid[y])) {
+          this.collapse(y);
+        }
+      }
+    },
+    collapse: function(y) {
+      this.grid.splice(y, 1);
+      this.grid.unshift(new Uint8Array(this.w));
+    },
+    move: function(dx, dy) {
+      // assert (dx,dy) in {(-1,0),(0,1),(1,0)}
+      if (this.piece) {
+        if (this.piece.canMove(dx, dy, game)) {
+          this.piece.move(dx, dy);
+          return;
+        }
+        if (dy == 1) { // must be true if dx==0
+          this.fix();
+          this.piece = null; // this will make us pick a new piece in the next iteration.
+        } // else dx!=0, so do nothing because we can't move there.
+      }
+    }
+  };
+
+  // the game model should probably be a member of gameview.
+  gameView = {
+    square: 30,
+    canvas: document.getElementById('canvas')
+  };
+  gameView.canvas.width = game.w * gameView.square;
+  gameView.canvas.height = game.h * gameView.square;
+  gameView.ctx = gameView.canvas.getContext('2d');
+  gameView.ctx.clearRect(0, 0, canvas.width, canvas.height);
+  gameView.clearCanvas = function() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  };
+  gameView.paintSquare = function(p) {
+    this.ctx.fillRect(p.x*this.square, p.y*this.square, this.square, this.square);
+  };
+  gameView.paint = function(g) {
+    this.clearCanvas();
+    
+    if (g.piece) {
+      // TODO: give Piece a "visitSquares" method, instead of doing this.
+      var squares = g.piece.squares();
+      for (var i = 0; i < squares.length; i++) {
+        this.paintSquare(squares[i]);
+      }
+    }
+
+    for (var i = 0; i < g.h; i++) {
+      for (var j = 0; j < g.w; j++) {
+        if (g.grid[i][j] == 1) {
+          // TODO: Again, visitSquares?
+          this.paintSquare({x: j, y: i});
+        }
+      }
+    }
+  };
+  gameView.paintLoop = function(g) {
+    if (g.isOver) {
+      return;
+    }
+    this.paint(g);
+    window.requestAnimationFrame(this.paintLoop.bind(this, g));
+  };
+};
+
+var startGame = function(e) {
+  // if we click go twice, this executes twice, which starts two of each of these
+  // loops. fix that.
+  game.start();
+  gameView.paintLoop(game);
+  window.onkeydown = function(e) {
+    var key = e.keyCode ? e.keyCode : e.which;
+    switch (key) {
+      case 37: // left
+        game.move(-1, 0);
+        break;
+      case 38: // up
+        break;
+      case 39: // right
+        game.move(1, 0);
+        break;
+      case 40: // down
+        game.move(0, 1);
+        break;
+    }
+    e.preventDefault();
+  };
+};
+
+</script>
+</html>
+
