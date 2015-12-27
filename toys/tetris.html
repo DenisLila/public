@@ -20,14 +20,53 @@
 var game = null;
 var gameView = null;
 
-var Piece = function(x, y) {
+var CUBES = [
+  [0,0,1,0,0,1,1,1]
+];
+var STRAIGHTS = [
+  [-1,0,0,0,1,0,2,0], // ---
+  [0,-1,0,0,0,1,0,2]  // |
+];
+var TS = [
+  [-1,0,0,0,1,0,0,1],  // T
+  [-1,0,0,-1,0,0,0,1], // -|
+  [-1,0,0,0,1,0,0,-1], // _|_
+  [0,-1,0,0,0,1,1,0]   // |-
+];
+var ZIG1S = [
+  [-1,0,0,0,0,1,1,1],
+  [0,-1,0,0,-1,0,-1,1]
+];
+// TODO: implement these shapes.
+var ZIG2S = [
+];
+var L1S = [
+];
+var L2S = [
+];
+var SHAPES = [CUBES, STRAIGHTS, TS, ZIG1S];
+
+var pickPiece = function(x, y) {
+  var idx = Math.floor(Math.random()*SHAPES.length);
+  return new Piece(x, y, SHAPES[idx]);
+};
+
+// template is an array of arrays of ints representing the coordinates of
+// shapes in each of their positions.
+var Piece = function(x, y, template) {
   this.x = x;
   this.y = y;
+  this.template = template;
+  this.rotPos = 0;
 };
 
 Piece.prototype.move = function(dx, dy) {
   this.x += dx;
   this.y += dy;
+};
+
+Piece.prototype.rot = function(dir) {
+  this.rotPos = (this.rotPos + dir + this.template.length) % this.template.length;
 };
 
 Piece.prototype.canMove = function(dx, dy, game) {
@@ -36,7 +75,7 @@ Piece.prototype.canMove = function(dx, dy, game) {
     var s = squares[i];
     s.x += dx;
     s.y += dy;
-    if (s.y >= game.h || s.x < 0 || s.x >= game.w || game.grid[s.y][s.x] == 1) {
+    if (s.y < 0 || s.y >= game.h || s.x < 0 || s.x >= game.w || game.grid[s.y][s.x] == 1) {
       return false;
     }
   }
@@ -44,7 +83,12 @@ Piece.prototype.canMove = function(dx, dy, game) {
 };
 
 Piece.prototype.squares = function() {
-  return [{x: this.x, y: this.y}];
+  var relCoords = this.template[this.rotPos];
+  var result = [];
+  for (var i = 0; i < relCoords.length; i+=2) {
+    result.push({x: this.x+relCoords[i], y: this.y+relCoords[i+1]});
+  }
+  return result;
 }
 
 var makeGrid = function(w, h) {
@@ -82,7 +126,7 @@ var initGame = function() {
           return;
         }
         if (!g.piece) {
-          g.piece = new Piece(5, 0);
+          g.piece = pickPiece(4, 0);
           if (!g.piece.canMove(0, 0, g)) {
             g.over = true;
             return;
@@ -97,7 +141,7 @@ var initGame = function() {
     },
     // TODO: asserts
     fix: function() {
-      // TODO(dlila): right now, our piece comes out all at a time.
+      // TODO(dlila): right now, our piece comes out all at once.
       // It needs to come out gradually, one row at a time.
       // Right now, this function is guaranteed to be able to house the piece in the grid.
       var squares = this.piece.squares();
@@ -111,7 +155,6 @@ var initGame = function() {
         yspan[y] = true;
       }
       for (var y in yspan) {
-        // TODO: collapse.
         if (allSet(this.grid[y])) {
           this.collapse(y);
         }
@@ -124,7 +167,7 @@ var initGame = function() {
     move: function(dx, dy) {
       // assert (dx,dy) in {(-1,0),(0,1),(1,0)}
       if (this.piece) {
-        if (this.piece.canMove(dx, dy, game)) {
+        if (this.piece.canMove(dx, dy, this)) {
           this.piece.move(dx, dy);
           return;
         }
@@ -132,6 +175,19 @@ var initGame = function() {
           this.fix();
           this.piece = null; // this will make us pick a new piece in the next iteration.
         } // else dx!=0, so do nothing because we can't move there.
+      }
+    },
+    rot: function(dir) {
+      // assert dir in (1, -1)
+      if (this.piece) {
+        // TODO: here we need to do the same thing as in move, but having a "canRot" method is
+        // very ugly. come up with something more general here (such as having a "canPerform(motion)"
+        // method. Different transforms could be represented by closure objects, and they could even have
+        // undo methods.
+        this.piece.rot(dir);
+        if (!this.piece.canMove(0, 0, this)) {
+          this.piece.rot(-dir);
+        }
       }
     }
   };
@@ -192,6 +248,7 @@ var startGame = function(e) {
         game.move(-1, 0);
         break;
       case 38: // up
+        game.rot(1);
         break;
       case 39: // right
         game.move(1, 0);
@@ -200,7 +257,6 @@ var startGame = function(e) {
         game.move(0, 1);
         break;
     }
-    e.preventDefault();
   };
 };
 
