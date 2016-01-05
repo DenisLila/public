@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title> Snake </title>
+</head>
+<body>
+  <div id='canvas-div'>
+    <canvas id='canvas' width='100' height='80'/>
+  </div>
+
+  <button onclick='startAnimation()'> Start Animation </button>
+</body>
+
+<script type='text/javascript'>
+
+// Rename to ScaledBitCanvas
+var SnakeCanvas = function(c, w, h, pixsize) {
+  c.width = w*pixsize + 15;
+  c.height = h*pixsize + 15;
+  this.ctx = c.getContext('2d');
+  this.pixsize = pixsize;
+  // We're not handling the case where the canvas dimensions are not multiples
+  // of pixsize.
+  this.w = w;
+  this.h = h;
+  this.ctx.fillStyle = 'rgb(0,0,0)';
+  this.ctx.clearRect(0, 0, c.width, c.height);
+  this.ctx.font = "14px serif";
+
+  this.ctx.beginPath();
+  for (var i = 0; i < h; i++) {
+    this.ctx.fillText(i+'', w*pixsize + 3, i*pixsize + 14);
+    this.ctx.moveTo(0, (i+1)*pixsize);
+    this.ctx.lineTo(c.width, (i+1)*pixsize);
+  }
+  for (var i = 0; i < w; i++) {
+    this.ctx.fillText(i+'', i*pixsize + 3, h*pixsize + 14);
+    this.ctx.moveTo((i+1)*pixsize, 0);
+    this.ctx.lineTo((i+1)*pixsize, c.height);
+  }
+  this.ctx.stroke();
+};
+
+SnakeCanvas.prototype.set = function(x, y) {
+  var s = this.pixsize;
+  this.ctx.fillRect(x*s, y*s, s, s);
+};
+
+// should be able to make this more general, to delay any function.
+var delayedSetter = function(dms, set) {
+  var counter = 0;
+  var dset = function(x, y) {
+    setTimeout(function() {set(x, y);}, dms*counter);
+    counter++;
+  };
+  return dset;
+};
+
+// c is some object with a set(x,y) method (i.e. snake canvas).
+var fill = function(c) {
+  var set = delayedSetter(600, c.set.bind(c));
+set(0, 0);
+set(1, 0);
+set(2, 0);
+set(3, 0);
+set(4, 0);
+set(4, 1);
+set(4, 2);
+set(4, 3);
+set(3, 3);
+set(2, 3);
+set(1, 3);
+set(0, 3);
+set(0, 2);
+set(0, 1);
+set(1, 1);
+set(2, 1);
+set(3, 1);
+set(3, 2);
+set(2, 2);
+set(1, 2);
+};
+
+var startAnimation = function(e) {
+  var snakeCanvas = new SnakeCanvas(canvas, 5, 4, SCALE);
+  fill(snakeCanvas);
+};
+
+// TODO(dlila): the scaling logic is split between here and the SnakeCanvas class.
+var SCALE = 20;
+var canvas = document.getElementById('canvas');
+
+</script>
+</html>
+
