@@ -111,11 +111,11 @@ var allSet = function(a) {
 var initGame = function() {
   // Make prototypes for these.
   game = {
-    h: 12, // TODO(dlila): find the actual tetris dimensions.
-    w: 8,
-    grid: makeGrid(8, 12), // TODO: keep in sync with w,h. find a cleaner way.
+    h: 20,
+    w: 10,
+    grid: makeGrid(10, 20), // TODO: keep in sync with w,h. find a cleaner way.
     piece: null,
-    pieceMoveTimeout: 200,
+    pieceMoveTimeout: 600,
     isOver: false,
     start: function() {
       var g = this;
@@ -126,7 +126,7 @@ var initGame = function() {
           return;
         }
         if (!g.piece) {
-          g.piece = pickPiece(4, 0);
+          g.piece = pickPiece(5, 0);
           if (!g.piece.canMove(0, 0, g)) {
             g.over = true;
             return;
