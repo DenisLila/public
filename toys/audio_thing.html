@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title> Audio Thing </title>
+  <style type="text/css">
+    canvas { border: 1px solid black; }
+  </style>
+</head>
+<body onload='setup()'>
+  <input type="file" id="file_input">
+  <button id='play_file'> Play </button>
+  <button id='stop_file'> Stop </button>
+
+  <br>
+  <hr>
+
+  <label for='music_tempo'> Tempo in bpm </label>
+  <input id="music_tempo" type="number" value='80'> </input>
+  <br>
+  <textarea id="sheet_music" rows="10" cols="70">e e f g g f e d c c d e e d.8 d.2</textarea>
+  <br>
+  <button id="play_sheet" > Play </button>
+
+  <br>
+  <hr>
+
+  <button id='add_file'> Add File Sound </button>
+  <button id='add_wave'> Add Wave Sound </button>
+
+  <br>
+
+  <div id='sound_building'>
+  </div>
+
+  <button id='play_wave'> Play Wave </button>
+
+  <p> Resulting Wave: </p>
+  <canvas id='resulting_wave' width='800' height='200'></canvas>
+
+     <div id='wave_template' hidden='true'>
+      <label>
+        Horizontal shift as a percentage of the period
+        <input class='shift_text' type='number' min='0' max='99' value='0'></input>
+        <input class='shift_range' type='range' min='0' max='99' value='0'></input>
+      </label>
+      <br>
+      <label>
+        Pitch <input class'pitch' type=number' value='440'></input>
+      </label>
+      <canvas class='sound_plot' width='800' height='200'></canvas>
+    </div>
+</body>
+
+<script type='text/javascript'>
+  var ctx = new AudioContext();
+
+  var FilePlayer = function(ctx) {
+    this.ctx = ctx;
+    this.buffer = null;
+    this.bufsrc = null;
+  };
+
+  // TODO(dlila): handle decoding errors (e.g. if the file is not audio).
+  FilePlayer.prototype.loadAudioFile = function(f, decodeCallback) {
+    var fr = new FileReader();
+    var player = this;
+    fr.onload = function(e) {
+      ctx.decodeAudioData(e.target.result).then(function(audioBuf) {
+        player.buffer = audioBuf;
+        decodeCallback();
+      });
+    };
+    fr.readAsArrayBuffer(f);
+  };
+
+  FilePlayer.prototype.isPlaying = function() {
+    return this.bufsrc != null;
+  };
+
+  FilePlayer.prototype.stopPlaying = function() {
+    if (this.bufsrc == null) {
+      throw 'illegal state: bufsrc is null';
+    }
+    this.bufsrc.stop(0);
+    this.bufsrc = null;
+  };
+
+  FilePlayer.prototype.isReadyToPlay = function() {
+    return this.buffer != null;
+  };
+
+  FilePlayer.prototype.play = function() {
+    if (this.buffer == null || this.bufsrc != null) {
+      throw [this.buffer == null, this.bufsrc != null].join();
+    }
+    this.bufsrc = ctx.createBufferSource();
+    this.bufsrc.buffer = this.buffer;
+    this.bufsrc.connect(ctx.destination);
+    this.bufsrc.start(0);
+  };
+ 
+  var filePlayer = new FilePlayer(ctx);
+
+  ////////////////// end fileplayer stuff //////////////////
+
+  var soundBuilding = document.getElementById('sound_building');
+  var waveConfigs = [];
+  var buffer = null;
+  var bufsrc = null;
+
+  var WaveBufCreator = function(duration) {
+    this.duration = duration;
+    this.buffer = ctx.createBuffer(1, ctx.sampleRate*this.duration, ctx.sampleRate);
+  };
+
+  var fillBuf = function(buf, pitch, shift) {
+    var c0Data = buf.getChannelData(0);
+    fillChannelData(c0Data, pitch, shift, buf.sampleRate);
+    for (var c = 1; c < buf.numberOfChannels; c++) {
+      buf.copyToChannel(c0Data, c);
+    }
+  };
+
+  var fillChannelData = function(arr, pitch, shift, sampleRate) {
+    if (shift < 0 || shift >= 100) {
+      throw shift;
+    }
+    // P(sin) = 2*pi; F = 1/P (P is period; F is frequency in Hz)
+    // P(sin . N*) = P(sin)/N ==> F(sin . N*) = N/P(sin) = N/(2*pi) // . is function composition
+    // ==> N = 2*pi*F, if F is known.
+    // sin(a*(x + b)) is sin shifted left by b. b = shift*P; sin(N*(x + shift*P)) = sin(2piF(x+shift/F)) =
+    // sin(2*pi*F*x + 2*pi*shift) = sin(2*pi*(F*x + shift)); x = i/sampleRate
+    var N = 2*Math.PI*pitch;
+    var fun = function(x) { return Math.sin(x*N); }
+    for (var i = 0; i < arr.length; i++) {
+      // c0Data[i] = fun(i / buf.sampleRate);
+      // sin(i * 2 * pi * pitch / sampleRate)
+      arr[i] = Math.sin(2*Math.PI*(pitch*i/sampleRate + shift/100.0));
+    }
+  };
+
+  var playWave = function() {
+    var waveBuf1 = ctx.createBuffer(1, 2*ctx.sampleRate, ctx.sampleRate);
+    var waveBuf2 = ctx.createBuffer(1, 2*ctx.sampleRate, ctx.sampleRate);
+    fillBuf(waveBuf1, 440, 0);
+    fillBuf(waveBuf2, 1.25*440, 0);
+    // buffer = waveBuf;
+    // playBuffer();
+
+    var src1 = ctx.createBufferSource();
+    src1.buffer = waveBuf1;
+    src1.connect(ctx.destination);
+    var src2 = ctx.createBufferSource();
+    src2.buffer = waveBuf2;
+    src2.connect(ctx.destination);
+   
+    src1.start(0);
+    src2.start(0);
+  };
+
+  var basePitches = {
+    'c': 32.7,
+    'c#': 34.6,
+    'd': 36.7,
+    'd#': 38.9,
+    'e': 41.2,
+    'f': 43.7,
+    'f#': 46.2,
+    'g': 49.0,
+    'g#': 51.9,
+    'a': 55.0,
+    'a#': 58.3,
+    'b': 61.7,
+  };
+
+  // TODO(dlila): notes are repeated a lot. This can be made a lot more efficient by generating
+  // whole-note buffers for every note that we actually play, and just taking from that.
+  // this assumes that the rhythm signature is 4,4
+  var playSheetMusic = function(tempo, notes) {
+    // note; {name, octave, duration}
+    // duration=1 means whole note; duration n means the note length is whole note divided by 2^n.
+    // name is one of c, c#, d, d#, e, f, g, g#, a, a#
+    // octave is the octave index, starting at 0.
+    // tempo is beats per minute (quarter notes per minute);
+    var wholeDur = 60*4/tempo;
+    var sampleArrs = [];
+    var totalSamples = 0;
+    for (var i = 0; i < notes.length; i++) {
+      var note = notes[i];
+      var dur = wholeDur / Math.pow(2, note.duration);
+      var pitch = basePitches[note.name] * Math.pow(2, note.octave);
+      var numSamples = ctx.sampleRate * dur;
+      var data = new Float32Array(numSamples);
+      fillChannelData(data, pitch, 0, ctx.sampleRate);
+      sampleArrs.push(data);
+      totalSamples += numSamples;
+    }
+
+    var buf = ctx.createBuffer(1, totalSamples, ctx.sampleRate);
+    var c0 = buf.getChannelData(0);
+    var c0idx = 0;
+    for (var i = 0; i < sampleArrs.length; i++) {
+      var arr = sampleArrs[i];
+      for (j = 0; j < arr.length; j++) {
+        var sample = arr[j];
+        c0[c0idx] = sample;
+        c0idx++;
+      }
+    }
+
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+  };
+
+  var parseSheetMusic = function(text) {
+    var parsed = [];
+    var text = text.split(new RegExp('\\s'));
+    for (var i = 0; i < text.length; i++) {
+      var noteText = text[i];
+      if (noteText === '') {
+        continue;
+      }
+      var noteArr = noteText.split('.');
+      if (noteArr.length > 3) {
+        throw noteArr;
+      }
+      var dur = 2;
+      var octave = 3;
+      var name;
+
+      var idx = 0;
+      var maybeOct = parseInt(noteArr[idx]);
+      if (!Number.isNaN(maybeOct)) {
+        octave = maybeOct;
+        if (octave < 0) {
+          throw octave;
+        }
+        idx++;
+      }
+      name = noteArr[idx++];
+      if (typeof name === 'undefined') {
+        throw noteArr;
+      }
+      if (typeof basePitches[name] === 'undefined') {
+        throw 'unknown note name ' + name;
+      }
+      if (idx < noteArr.length) {
+        var parsedDur = parseInt(noteArr[idx]);
+        if (parsedDur < 1) {
+          throw parsedDur;
+        }
+        dur = Math.log2(parsedDur);
+        if (!Number.isInteger(dur)) {
+          throw dur;
+        }
+      }
+      parsed.push({name: name, duration: dur, octave: octave});
+    }
+    return parsed;
+  };
+
+  var playBuffer = function(buf) {
+    if (buf == null || bufsrc != null) {
+      throw [buf == null, bufsrc != null].join();
+    }
+    bufsrc = ctx.createBufferSource();
+    bufsrc.buffer = buf;
+    bufsrc.connect(ctx.destination);
+    bufsrc.start(0);
+  };
+
+  var stopPlaying = function() {
+    if (bufsrc == null) {
+      throw 'illegal state: bufsrc is null';
+    }
+    bufsrc.stop(0);
+    bufsrc = null;
+  };
+
+  var addWaveElement = function() {
+    var tmpl = document.getElementById('wave_template');
+    var copy = tmpl.cloneNode(true);
+    soundBuilding.appendChild(copy);
+    copy.hidden = false;
+    copy.id = '';
+    waveConfigs.push(copy);
+  };
+
+  var setup = function() {
+    var d = document;
+    var fi = d.getElementById('file_input');
+
+    d.getElementById('play_file').onclick = function() {
+      if (filePlayer.isPlaying()) {
+        filePlayer.stopPlaying();
+      }
+      if (filePlayer.isReadyToPlay()) {
+        if (fi.files.length != 0) {
+          filePlayer.loadAudioFile(fi.files[0], () => filePlayer.play());
+        }
+      } else {
+        filePlayer.play();
+      }
+    };
+
+    d.getElementById('stop_file').onclick = function() {
+      if (!filePlayer.isPlaying()) {
+        return;
+      }
+      filePlayer.stopPlaying();
+    };
+
+    // When a new file is selected, decode the audio and save it in 'buffer'.
+    fi.onchange = function(e) {
+      var files = e.target.files;
+      if (files.length != 0) {
+        filePlayer.loadAudioFile(files[0], function() {});
+      }
+    };
+
+    document.getElementById('play_sheet').onclick = function() {
+      var music = document.getElementById('sheet_music');
+      var parsed = parseSheetMusic(music.value);
+      playSheetMusic(document.getElementById('music_tempo').value, parsed);
+    };
+  };
+</script>
+</html>
+
