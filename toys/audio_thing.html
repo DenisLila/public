@@ -25,18 +25,20 @@
   <br>
   <hr>
 
-  <button id='add_file'> Add File Sound </button>
-  <button id='add_wave'> Add Wave Sound </button>
+  <div hidden='true'>
+    <button id='add_file'> Add File Sound </button>
+    <button id='add_wave'> Add Wave Sound </button>
 
-  <br>
+    <br>
 
-  <div id='sound_building'>
+    <div id='sound_building'>
+    </div>
+
+    <button id='play_wave'> Play Wave </button>
+
+    <p> Resulting Wave: </p>
+    <canvas id='resulting_wave' width='800' height='200'></canvas>
   </div>
-
-  <button id='play_wave'> Play Wave </button>
-
-  <p> Resulting Wave: </p>
-  <canvas id='resulting_wave' width='800' height='200'></canvas>
 
      <div id='wave_template' hidden='true'>
       <label>
